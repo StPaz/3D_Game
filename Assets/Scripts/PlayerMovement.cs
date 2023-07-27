@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+
     public float maximumSpeed;
     public float rotationSpeed;
     public float jumpSpeed;
     public float jumpButtonGracePeriod;
+    public Transform cameraTransform;
 
     private Animator animator;
     private CharacterController characterController;
@@ -42,6 +44,7 @@ public class PlayerMovement : MonoBehaviour
 
         animator.SetFloat("InputMagnitude", inputMagnitude, 0.05f, Time.deltaTime);
         float speed = inputMagnitude * maximumSpeed;
+        movementDirection = Quaternion.AngleAxis(cameraTransform.rotation.eulerAngles.y, Vector3.up) * movementDirection;
         movementDirection.Normalize();
 
         ySpeed += Physics.gravity.y * Time.deltaTime;
@@ -83,6 +86,15 @@ public class PlayerMovement : MonoBehaviour
             Quaternion toRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
 
             transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
+        }
+    }
+
+    private void OnApplicationFocus(bool focus)
+    {
+        if (focus) {
+            Cursor.lockState = CursorLockMode.Locked;
+        } else {
+            Cursor.lockState = CursorLockMode.None;
         }
     }
 }
