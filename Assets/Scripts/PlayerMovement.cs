@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float speed;
+    public float maximumSpeed;
     public float rotationSpeed;
     public float jumpSpeed;
     public float jumpButtonGracePeriod;
@@ -34,7 +34,14 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 movementDirection = new Vector3(horizontalInput, 0, verticalInput);
 
-        float magnitude = Mathf.Clamp01(movementDirection.magnitude) * speed;
+        float inputMagnitude = Mathf.Clamp01(movementDirection.magnitude);
+
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) {
+            inputMagnitude /= 2;
+        }
+
+        animator.SetFloat("InputMagnitude", inputMagnitude, 0.05f, Time.deltaTime);
+        float speed = inputMagnitude * maximumSpeed;
         movementDirection.Normalize();
 
         ySpeed += Physics.gravity.y * Time.deltaTime;
@@ -66,20 +73,16 @@ public class PlayerMovement : MonoBehaviour
 
        
 
-        velocity = movementDirection * magnitude;
+        velocity = movementDirection * speed;
         velocity.y = ySpeed;
         
         characterController.Move(velocity * Time.deltaTime);
 
         if (movementDirection != Vector3.zero)
         {
-            animator.SetBool("IsMoving", true);
             Quaternion toRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
 
             transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
-        }
-        else {
-            animator.SetBool("IsMoving", false);
         }
     }
 }
