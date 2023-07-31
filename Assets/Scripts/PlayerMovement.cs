@@ -9,6 +9,7 @@ public class PlayerMovement : MonoBehaviour
     public float jumpSpeed;
     public float jumpButtonGracePeriod;
     public Transform cameraTransform;
+    public float jumpHorizontalSpeed;
 
     private Animator animator;
     private CharacterController characterController;
@@ -17,6 +18,10 @@ public class PlayerMovement : MonoBehaviour
     private float originalStepOffset;
     private float? lastGroundedTime;
     private float? jumpButtonPressedTime;
+
+    private bool isJumping;
+    private bool isGrounded;
+    private bool isFalling;
 
     // Start is called before the first frame update
     void Start()
@@ -61,16 +66,32 @@ public class PlayerMovement : MonoBehaviour
         if (Time.time - lastGroundedTime <= jumpButtonGracePeriod) {
             characterController.stepOffset = originalStepOffset;
             ySpeed = -0.5f;
+            animator.SetBool("IsGrounded", true);
+            isGrounded = true;
+            animator.SetBool("IsJumping", false);
+            isJumping = false;
+            animator.SetBool("IsFalling", false);
+            isFalling = false;
+
             if (Time.time - jumpButtonPressedTime <= jumpButtonGracePeriod)
             {
                 ySpeed = jumpSpeed;
+                animator.SetBool("IsJumping", true);
+                isJumping = true;
                 jumpButtonPressedTime = null;
                 lastGroundedTime = null;
             }
         }
         else
         {
+           
             characterController.stepOffset = 0;
+            animator.SetBool("IsGrounded", false);
+            isGrounded = false;
+            if ((isJumping && ySpeed < 0) || ySpeed < -2) {
+                animator.SetBool("IsFalling", true);
+                isFalling = true;
+            }
         }
 
 
@@ -85,6 +106,14 @@ public class PlayerMovement : MonoBehaviour
         else {
             animator.SetBool("IsMoving", false);
         }
+
+        if (!isGrounded) {
+            Vector3 velocity = movementDirection * inputMagnitude * jumpHorizontalSpeed;
+            velocity.y = ySpeed;
+
+            characterController.Move(velocity * Time.deltaTime);
+
+        }
     }
 
     private void OnApplicationFocus(bool focus)
@@ -98,9 +127,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnAnimatorMove()
     {
-        velocity = animator.deltaPosition;
-        velocity.y = ySpeed * Time.deltaTime;
+        if (isGrounded) {
+            velocity = animator.deltaPosition;
+            velocity.y = ySpeed * Time.deltaTime;
 
-        characterController.Move(velocity);
+            characterController.Move(velocity);
+        }
+       
     }
 }
